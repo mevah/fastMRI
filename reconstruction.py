@@ -23,7 +23,7 @@ if not os.path.exists(save_k_path):
 
 #get train img list
 print("Starting getting files from train directory.")
-file_list = os.listdir(train_path)
+file_list = os.listdir(val_path)
 
 #read and write each slice into a .png file in each scan
 for file in file_list:
@@ -31,7 +31,7 @@ for file in file_list:
     modality = words[2]
     if modality == "AXFLAIR":
 
-        with h5py.File(os.path.join(train_path, file), "r") as hf:
+        with h5py.File(os.path.join(val_path, file), "r") as hf:
             k = hf["kspace"]
             numslices = hf["kspace"].shape[0]
             print("File:", file)
@@ -50,11 +50,11 @@ for file in file_list:
 
                 ####fully sampled k space root sum of square reconstruction
                 slice_image_rss = fastmri.rss(slice_image_abs, dim=0)   
-                plt.imsave(s_p, np.abs(slice_image_rss.numpy()), cmap='gray')
-                np.save(s_k, slice_kspace2)
+                #plt.imsave(s_p, np.abs(slice_image_rss.numpy()), cmap='gray')
+                #np.save(s_k, slice_kspace2)
 
                 ###iterate over different accelerations and save the sliced kspaces and reconstructions from them into subfolders
-                for acc in range(2,9): 
+                for acc in [9,10,15,20]: 
                     mask_func = EquispacedMaskFunc(center_fractions=[0.04], accelerations=[acc])  # Create the mask function object
                     masked_kspace, mask = T.apply_mask(
                         slice_kspace2, mask_func)   # Apply the mask to k-space
