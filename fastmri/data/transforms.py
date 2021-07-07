@@ -330,7 +330,7 @@ class VarNetDataTransform:
     Data Transformer for training VarNet models.
     """
 
-    def __init__(self, mask_func: Optional[MaskFunc] = None, use_seed: bool = True):
+    def __init__(self, mask_func: Optional[MaskFunc] = None, use_seed: bool = True, use_pads: bool = False):
         """
         Args:
             mask_func: Optional; A function that can create a mask of
@@ -341,6 +341,7 @@ class VarNetDataTransform:
         """
         self.mask_func = mask_func
         self.use_seed = use_seed
+        self.use_pads= use_pads
 
     def __call__(
         self,
@@ -380,15 +381,21 @@ class VarNetDataTransform:
 
         kspace = to_tensor(kspace)
         seed = None if not self.use_seed else tuple(map(ord, fname))
+    
         acq_start = attrs["padding_left"]
         acq_end = attrs["padding_right"]
+     
 
         crop_size = torch.tensor([attrs["recon_size"][0], attrs["recon_size"][1]])
 
         if self.mask_func:
-            masked_kspace, mask = apply_mask(
-                kspace, self.mask_func, seed, (acq_start, acq_end)
-            )
+            if self.use_pads:
+                masked_kspace, mask = apply_mask(
+                    kspace, self.mask_func, seed, (acq_start, acq_end)
+                )
+            else: 
+                masked_kspace, mask = apply_mask(
+                    kspace, self.mask_func, seed )
         else:
             masked_kspace = kspace
             shape = np.array(kspace.shape)

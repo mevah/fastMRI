@@ -184,6 +184,7 @@ class SliceDataset(torch.utils.data.Dataset):
         use_dataset_cache: bool = False,
         dataset_cache_file: Union[str, Path, os.PathLike] = "dataset_cache.pkl",
         num_cols: Optional[Tuple[int]] = None,
+        anns_path: Union[str, Path, os.PathLike]
     ):
         """
         Args:
@@ -202,6 +203,8 @@ class SliceDataset(torch.utils.data.Dataset):
                 information for faster load times.
             num_cols: Optional; If provided, only slices with the desired
                 number of columns will be considered.
+
+            anns_path: path containing the healthy status annotations
         """
         if challenge not in ("singlecoil", "multicoil"):
             raise ValueError('challenge should be either "singlecoil" or "multicoil"')
@@ -213,6 +216,10 @@ class SliceDataset(torch.utils.data.Dataset):
             "reconstruction_esc" if challenge == "singlecoil" else "reconstruction_rss"
         )
         self.examples = []
+        
+        #load the annotations   
+        self.anns = np.load(anns_path, allow_pickle=True).item()
+        self.ext = list(self.anns.keys())[0][-4:] #file extension
 
         # load dataset cache if we have and user wants to use it
         if self.dataset_cache_file.exists() and use_dataset_cache:
@@ -310,4 +317,7 @@ class SliceDataset(torch.utils.data.Dataset):
         else:
             sample = self.transform(kspace, mask, target, attrs, fname.name, dataslice)
 
-        return sample
+        labelfilename = img.split("/")[-1]
+        label = self.anns[filename[0:-4] + self.ext]
+
+        return sample, label
